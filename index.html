@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบคำนวณและบันทึกเวลาทำงาน E-9 (V9.8-AutoCheck)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+        .disabled-row { opacity: 0.4; }
+        .disabled-row input[type="time"] { pointer-events: none; background-color: #f1f5f9; }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-100 min-h-screen pb-12">
+
+    <div class="bg-indigo-700 text-white pt-6 pb-24 px-4 rounded-b-3xl shadow-md text-center">
+        <h1 class="text-xl font-bold">ระบบบันทึกเวลาทำงาน E-9</h1>
+    <!-- <p class="text-xs text-indigo-200 mt-1">V9.8 - ฐานเงินเดือนคิดเฉพาะวันปกติที่มาจริง + ค่าเริ่มต้นติ๊กทุกวัน</ฝp> -->
+        
+        <div class="mt-4 flex justify-center items-center space-x-2 max-w-xs mx-auto">
+            <select id="selectMonth" onchange="changeCalendar()" class="bg-indigo-800 text-white text-xs rounded-lg px-3 py-2 border border-indigo-500 focus:outline-none w-1/2">
+                <option value="0">มกราคม</option><option value="1">กุมภาพันธ์</option><option value="2">มีนาคม</option>
+                <option value="3">เมษายน</option><option value="4">พฤษภาคม</option><option value="5">มิถุนายน</option>
+                <option value="6">กรกฎาคม</option><option value="7">สิงหาคม</option><option value="8">กันยายน</option>
+                <option value="9">ตุลาคม</option><option value="10">พฤศจิกายน</option><option value="11">ธันวาคม</option>
+            </select>
+            <select id="selectYear" onchange="changeCalendar()" class="bg-indigo-800 text-white text-xs rounded-lg px-3 py-2 border border-indigo-500 focus:outline-none w-1/2">
+                </select>
+        </div>
+    </div>
+
+    <div class="max-w-md mx-auto px-4 -mt-16 space-y-6">
+
+        <div class="bg-white rounded-2xl shadow-lg p-4 border border-slate-200/80 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
+                    <span class="mr-1.5">⚙️</span> ตั้งค่าเวลาตั้งต้น (จำค่าถาวร)
+                </h2>
+                <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded">สูตรเฉลี่ยรายวัน</span>
+            </div>
+            
+            <div class="space-y-1.5 border-b border-slate-100 pb-3">
+                <span class="text-xs font-bold text-indigo-600 flex items-center">🔹 วันธรรมดา (จันทร์ - ศุกร์)</span>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-slate-500">เข้างาน</label>
+                        <input type="time" id="defStart" value="08:00" onchange="saveStaticConfig(); applyDefaultTimeToAll();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-500">เลิกงานปกติ</label>
+                        <input type="time" id="defEnd" value="17:00" onchange="saveStaticConfig(); applyDefaultTimeToAll();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-500">เวลาพัก (ชม.)</label>
+                        <input type="number" id="defBreak" value="1" step="0.5" onchange="saveStaticConfig(); calculateSalary();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium">
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-1.5">
+                <span class="text-xs font-bold text-rose-500 flex items-center">🟥 วันหยุดสัปดาห์ / วันหยุดเกาหลี</span>
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-slate-500">เข้างาน</label>
+                        <input type="time" id="wkStart" value="08:00" onchange="saveStaticConfig(); applyDefaultTimeToAll();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-500">เลิกงาน</label>
+                        <input type="time" id="wkEnd" value="17:00" onchange="saveStaticConfig(); applyDefaultTimeToAll();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-500">เวลาพัก (ชม.)</label>
+                        <input type="number" id="wkBreak" value="1" step="0.5" onchange="saveStaticConfig(); calculateSalary();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-lg p-4 border border-slate-200/80 space-y-4">
+            <div class="border-b border-slate-100 pb-2 flex justify-between items-center">
+                <h2 class="text-xs font-bold text-rose-600 uppercase tracking-wider flex items-center">
+                    <span class="mr-1.5">💸</span> รายการหักเงินจากสลิป (วอน)
+                </h2>
+                <button onclick="reTriggerAutoCalc()" class="text-[9px] bg-indigo-50 text-indigo-700 font-bold px-2 py-0.5 rounded border border-indigo-200 hover:bg-indigo-100">
+                    🔄 ใช้ค่าคำนวณแอป
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-0.5 font-medium">소득세 (ภาษีเงินได้)</label>
+                    <input type="number" id="deductIncomeTax" value="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg font-mono font-bold text-slate-700 text-right">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-0.5 font-medium">지방소득세 (ภาษีท้องถิ่น)</label>
+                    <input type="number" id="deductLocalTax" value="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg font-mono font-bold text-slate-700 text-right">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-0.5 font-medium">건강보험 (ประกันสุขภาพ)</label>
+                    <input type="number" id="deductHealthIns" value="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg font-mono font-bold text-slate-700 text-right">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-500 mb-0.5 font-medium">고용보험 (ประกันการจ้างงาน)</label>
+                    <input type="number" id="deductJobIns" value="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg font-mono font-bold text-slate-700 text-right">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-600 mb-0.5 font-semibold text-indigo-600">숙소/관리비 (ค่าที่พักถาวร)</label>
+                    <input type="number" id="deductRoom" value="180000" oninput="saveStaticConfig(); updateDeductionTotals();" class="w-full px-2 py-1.5 border border-indigo-300 bg-indigo-50/30 rounded-lg font-mono font-bold text-indigo-900 text-right">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-slate-600 mb-0.5 font-semibold text-amber-600">기타공제 (รายการหักอื่นๆ)</label>
+                    <input type="number" id="deductOther" value="0" placeholder="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1.5 border border-amber-300 bg-amber-50/30 rounded-lg font-mono font-bold text-amber-900 text-right">
+                </div>
+            </div>
+
+            <div class="bg-rose-50 text-rose-800 text-[11px] p-2 rounded-lg flex justify-between items-center font-medium">
+                <span>ยอดรวมรายการที่หักทั้งหมด:</span>
+                <span id="txtTotalDeduction" class="font-mono font-bold">0 วอน</span>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 text-white rounded-2xl p-5 shadow-xl space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xs font-bold text-green-400 tracking-wide uppercase">💰 สรุปรายได้เดือนนี้ (10,300 วอน/ชม.)</h3>
+                <button onclick="resetToDatabase()" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded hover:bg-slate-700 transition">รีเซ็ตตารางเดือนนี้</button>
+            </div>
+            
+            <div class="bg-slate-850 p-2.5 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-1">
+                <div class="flex justify-between">
+                    <span>📅 วันทำงานปกติของเดือนนี้ (จ.-ศ.):</span>
+                    <span id="txtTotalNormalDays" class="font-mono font-bold text-indigo-400">0 วัน</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>💵 อัตราเงินเดือนเฉลี่ยรายวัน:</span>
+                    <span id="txtDailyRate" class="font-mono font-bold text-yellow-400">0 วอน/วัน</span>
+                </div>
+                <div class="flex justify-between border-t border-slate-800 pt-1 mt-1">
+                    <span class="text-emerald-400">✅ พี่ติ๊กทำงานในวันปกติจริง:</span>
+                    <span id="txtActualNormalDays" class="font-mono font-bold text-emerald-400">0 วัน</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-center">
+                <div class="bg-slate-800/40 p-1.5 rounded-xl border border-slate-800">
+                    <span class="text-[9px] text-emerald-400 block font-medium">OT 1.5 เท่า รวม</span>
+                    <span id="sumOt15Hours" class="text-md font-extrabold text-emerald-400 font-mono">0.0 ชม.</span>
+                </div>
+                <div class="bg-slate-800/40 p-1.5 rounded-xl border border-slate-800">
+                    <span class="text-[9px] text-green-400 block font-medium">OT 2.0 เท่า รวม</span>
+                    <span id="sumOt20Hours" class="text-md font-extrabold text-green-400 font-mono">0.0 ชม.</span>
+                </div>
+            </div>
+
+            <div class="space-y-2 text-xs">
+                <div class="flex justify-between items-center bg-lime-950/20 px-2 py-1.5 rounded-lg border-l-4 border-lime-500">
+                    <span class="text-lime-400 font-medium">💵 เงินเดือนพื้นฐาน (เฉพาะวันปกติ):</span>
+                    <span id="txtBasePay" class="font-mono font-bold text-lime-400">0 วอน</span>
+                </div>
+                
+                <div class="flex justify-between items-center bg-emerald-950/20 px-2 py-1.5 rounded-lg border-l-4 border-emerald-500">
+                    <span class="text-emerald-400 font-medium">➕ รายได้ OT เรท 1.5 เท่า:</span>
+                    <span id="txtOt15Pay" class="text-emerald-400 font-mono font-bold">0 วอน</span>
+                </div>
+                
+                <div class="flex justify-between items-center bg-green-950/20 px-2 py-1.5 rounded-lg border-l-4 border-green-500">
+                    <span class="text-green-400 font-medium">🚀 รายได้ OT เรท 2.0 เท่า (วันหยุด):</span>
+                    <span id="txtOt20Pay" class="text-green-400 font-mono font-bold">0 วอน</span>
+                </div>
+
+                <div class="flex justify-between items-center bg-rose-950/20 px-2 py-1.5 rounded-lg border-l-4 border-rose-500 text-rose-400">
+                    <span class="font-medium">❌ ยอดหักเงินรวมสุทธิ:</span>
+                    <span id="txtDeductSummary" class="font-mono font-bold">-0 วอน</span>
+                </div>
+            </div>
+
+            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 space-y-2">
+                <div class="flex justify-between items-center">
+                    <div class="space-y-0.5">
+                        <label id="lblRateMode" class="block text-[11px] text-yellow-400 font-bold">🏦 โหมด Hana Bank (1 บาท = กี่วอน)</label>
+                        <p class="text-[9px] text-slate-400 leading-none">*ป้อนเรทแลกเงินเพื่อคำนวณกลับเป็นบาท</p>
+                    </div>
+                    <button onclick="toggleRateMode()" class="text-[9px] bg-indigo-600 text-white px-2 py-1 rounded font-bold hover:bg-indigo-500 shadow transition">
+                        🔄 สลับโหมดเรท
+                    </button>
+                </div>
+                <div>
+                    <input type="number" id="exchangeRateInput" value="47.85" step="0.01" oninput="calculateSalary()" class="w-full text-right px-3 py-1.5 bg-slate-900 border border-slate-600 rounded text-sm font-mono font-bold text-yellow-400 focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+
+            <hr class="border-slate-800">
+
+            <div class="flex justify-between items-center pt-1">
+                <div>
+                    <span class="text-[10px] text-slate-400 block uppercase font-medium">실지급액 (เงินวอนรับจริง)</span>
+                    <span id="txtNetWon" class="text-2xl font-black text-yellow-400 font-mono tracking-tight">0 วอน</span>
+                </div>
+                <div class="text-right">
+                    <span class="text-[10px] text-slate-400 block uppercase font-medium">คิดเป็นเงินไทยประมาณ</span>
+                    <span id="txtNetThb" class="text-xl font-black text-green-400 font-mono tracking-tight">≈ 0 บาท</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-md p-4 border border-slate-200">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-xs font-bold text-slate-800 uppercase">📅 รายการปฏิทินประจำเดือน</h3>
+                <div class="flex items-center space-x-1">
+                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" class="w-4 h-4 text-indigo-600 border-slate-300 rounded cursor-pointer" checked>
+                    <label for="selectAllCheckbox" class="text-xs font-semibold text-slate-600 cursor-pointer select-none">เลือกทั้งหมด</label>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-1 bg-slate-100 text-[11px] font-bold text-slate-600 p-2 rounded-lg text-center mb-2">
+                <div class="col-span-4 text-left pl-1">วันที่</div>
+                <div class="col-span-3">เข้างาน</div>
+                <div class="col-span-3">เลิกงาน</div>
+                <div class="col-span-2 text-emerald-600">OT (ชม.)</div>
+            </div>
+
+            <div id="daysContainer" class="space-y-1.5 max-h-[50vh] overflow-y-auto pr-1">
+                </div>
+        </div>
+
+    </div>
+
+    <script>
+        const WAGE_2026 = 10300; 
+        const TOTAL_MONTHLY_HOURS = 209; 
+        let totalDaysInMonth = 0;
+        let isUserEditingDeductions = false;
+        let currentRateMode = "HANA"; 
+
+        const KOREAN_HOLIDAYS = {
+            "2026-01-01": "วันขึ้นปีใหม่", "2026-02-16": "วันหยุดซอลลัล", "2026-02-17": "วันซอลลัล",
+            "2026-02-18": "วันหยุดซอลลัล", "2026-03-01": "วันกู้เอกราช", "2026-03-02": "วันหยุดชดเชย",
+            "2026-05-01": "วันแรงงาน", "2026-05-05": "วันเด็กเกาหลี", "2026-05-24": "วันวิสาขบูชา",
+            "2026-05-25": "วันหยุดชดเชย", "2026-06-06": "วันระลึกผู้พลีชีพ", "2026-08-15": "วันประกาศอิสรภาพ",
+            "2026-08-17": "วันหยุดชดเชย", "2026-09-24": "วันหยุดชูซอก", "2026-09-25": "วันชูซอก",
+            "2026-09-26": "วันหยุดชูซอก", "2026-10-03": "วันสถาปนาชาติ", "2026-10-05": "วันหยุดชดเชย",
+            "2026-10-09": "วันอักษรฮันกึล", "2026-12-25": "วันคริสต์มาส"
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initYearDropdown();
+            setCurrentMonthYear();
+            loadStaticConfig(); 
+            initCalendar();
+            loadSavedData();
+        });
+
+        function saveStaticConfig() {
+            const config = {
+                defStart: document.getElementById('defStart').value,
+                defEnd: document.getElementById('defEnd').value,
+                defBreak: document.getElementById('defBreak').value,
+                wkStart: document.getElementById('wkStart').value,
+                wkEnd: document.getElementById('wkEnd').value,
+                wkBreak: document.getElementById('wkBreak').value,
+                deductRoom: document.getElementById('deductRoom').value
+            };
+            localStorage.setItem('e9_static_config', JSON.stringify(config));
+        }
+
+        function loadStaticConfig() {
+            const config = JSON.parse(localStorage.getItem('e9_static_config'));
+            if (config) {
+                if (config.defStart) document.getElementById('defStart').value = config.defStart;
+                if (config.defEnd) document.getElementById('defEnd').value = config.defEnd;
+                if (config.defBreak) document.getElementById('defBreak').value = config.defBreak;
+                if (config.wkStart) document.getElementById('wkStart').value = config.wkStart;
+                if (config.wkEnd) document.getElementById('wkEnd').value = config.wkEnd;
+                if (config.wkBreak) document.getElementById('wkBreak').value = config.wkBreak;
+                if (config.deductRoom) document.getElementById('deductRoom').value = config.deductRoom;
+            }
+        }
+
+        function initYearDropdown() {
+            const selectYear = document.getElementById('selectYear');
+            const currentYear = new Date().getFullYear();
+            for (let y = currentYear - 1; y <= currentYear + 3; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.innerText = `ปี พ.ศ. ${y + 543}`;
+                if (y === currentYear) opt.selected = true;
+                selectYear.appendChild(opt);
+            }
+        }
+
+        function setCurrentMonthYear() {
+            const now = new Date();
+            document.getElementById('selectMonth').value = now.getMonth();
+            document.getElementById('selectYear').value = now.getFullYear();
+        }
+
+        function changeCalendar() {
+            document.getElementById('selectAllCheckbox').checked = true; // เมื่อเปลี่ยนเดือนให้เลือกทั้งหมด
+            isUserEditingDeductions = false;
+            initCalendar();
+            loadSavedData();
+        }
+
+        function initCalendar() {
+            const year = parseInt(document.getElementById('selectYear').value);
+            const month = parseInt(document.getElementById('selectMonth').value);
+
+            totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+            const container = document.getElementById('daysContainer');
+            container.innerHTML = '';
+
+            const defStart = document.getElementById('defStart').value;
+            const defEnd = document.getElementById('defEnd').value;
+            const wkStart = document.getElementById('wkStart').value;
+            const wkEnd = document.getElementById('wkEnd').value;
+
+            for (let day = 1; day <= totalDaysInMonth; day++) {
+                const dateObj = new Date(year, month, day);
+                const dayOfWeek = dateObj.getDay(); 
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const holidayName = KOREAN_HOLIDAYS[dateKey];
+
+                let dayColor = "text-slate-800";
+                let rowBg = "bg-slate-50";
+                let isHolidayMode = false;
+                let currentStart = defStart;
+                let currentEnd = defEnd;
+                let displayLabel = `${day}`;
+
+                if (dayOfWeek === 0) {
+                    dayColor = "text-rose-600 font-bold"; rowBg = "bg-rose-50/50 border-rose-200"; isHolidayMode = true; currentStart = wkStart; currentEnd = wkEnd;
+                } else if (dayOfWeek === 6) {
+                    dayColor = "text-blue-600 font-bold"; rowBg = "bg-blue-50/50 border-blue-200"; isHolidayMode = true; currentStart = wkStart; currentEnd = wkEnd;
+                }
+
+                if (holidayName) {
+                    dayColor = "text-red-700 font-extrabold"; rowBg = "bg-red-100/70 border-red-300"; isHolidayMode = true; currentStart = wkStart; currentEnd = wkEnd;
+                    displayLabel = `${day} 🇰🇷 <span class="text-[9px] block font-normal text-red-600 leading-none truncate max-w-[80px]">${holidayName}</span>`;
+                } else {
+                    displayLabel = `${day} (${dateObj.toLocaleDateString('th-TH', { weekday: 'short' })})`;
+                }
+
+                // สังเกตว่าเราเอาคลาส disabled-row ออก และใส่ checked ลงใน input เพื่อให้มันเริ่มที่ค่าติ๊กถูก
+                container.innerHTML += `
+                    <div id="row-${day}" class="grid grid-cols-12 gap-1 items-center ${rowBg} border p-1.5 rounded-xl transition" data-holiday="${isHolidayMode}">
+                        <div class="col-span-4 flex items-center space-x-1">
+                            <input type="checkbox" id="chk-${day}" onchange="toggleDayRow(${day})" class="day-checkbox w-4 h-4 text-indigo-600 rounded border-slate-300 cursor-pointer" checked>
+                            <span class="text-xs ${dayColor} select-none leading-tight">${displayLabel}</span>
+                        </div>
+                        <div class="col-span-3"><input type="time" id="start-${day}" value="${currentStart}" onchange="calculateSalary()" class="w-full text-center px-1 py-1 bg-white border border-slate-300 rounded-lg text-xs"></div>
+                        <div class="col-span-3"><input type="time" id="end-${day}" value="${currentEnd}" onchange="calculateSalary()" class="w-full text-center px-1 py-1 bg-white border border-slate-300 rounded-lg text-xs"></div>
+                        <div class="col-span-2 text-center text-xs font-bold text-emerald-600 font-mono" id="ot-text-${day}">0.0</div>
+                    </div>`;
+            }
+        }
+
+        function toggleDayRow(day) {
+            const checkbox = document.getElementById(`chk-${day}`);
+            const row = document.getElementById(`row-${day}`);
+            if (checkbox.checked) {
+                row.classList.remove('disabled-row');
+            } else {
+                row.classList.add('disabled-row');
+            }
+            calculateSalary();
+        }
+
+        function toggleSelectAll(master) {
+            document.querySelectorAll('.day-checkbox').forEach(cb => {
+                cb.checked = master.checked;
+                const day = cb.id.split('-')[1];
+                const row = document.getElementById(`row-${day}`);
+                if (master.checked) {
+                    row.classList.remove('disabled-row');
+                } else {
+                    row.classList.add('disabled-row');
+                }
+            });
+            calculateSalary();
+        }
+
+        function applyDefaultTimeToAll() {
+            for (let day = 1; day <= totalDaysInMonth; day++) {
+                const isHoliday = document.getElementById(`row-${day}`).getAttribute('data-holiday') === 'true';
+                document.getElementById(`start-${day}`).value = isHoliday ? document.getElementById('wkStart').value : document.getElementById('defStart').value;
+                document.getElementById(`end-${day}`).value = isHoliday ? document.getElementById('wkEnd').value : document.getElementById('defEnd').value;
+            }
+            calculateSalary();
+        }
+
+        function updateDeductionTotals() { isUserEditingDeductions = true; calculateSalary(); }
+        function reTriggerAutoCalc() { isUserEditingDeductions = false; calculateSalary(); }
+
+        function toggleRateMode() {
+            const currentVal = parseFloat(document.getElementById('exchangeRateInput').value) || 0;
+            if (currentRateMode === "HANA") {
+                currentRateMode = "MULTIPLY";
+                document.getElementById('lblRateMode').innerText = "💱 โหมดตัวคูณทั่วไป (1 วอน = กี่บาท)";
+                document.getElementById('exchangeRateInput').step = "0.0001";
+                document.getElementById('exchangeRateInput').value = currentVal > 0 ? (1 / currentVal).toFixed(4) : "0.0210";
+            } else {
+                currentRateMode = "HANA";
+                document.getElementById('lblRateMode').innerText = "🏦 โหมด Hana Bank (1 บาท = กี่วอน)";
+                document.getElementById('exchangeRateInput').step = "0.01";
+                document.getElementById('exchangeRateInput').value = currentVal > 0 ? (1 / currentVal).toFixed(2) : "47.85";
+            }
+            calculateSalary();
+        }
+
+        function calculateSalary() {
+            let totalCheckedDays = 0;
+            let totalWorkedNormalDays = 0; 
+            let totalNormalDaysInMonth = 0; 
+            
+            let totalOt15Hours = 0, totalOt20Hours = 0; 
+            let totalOt15Pay = 0, totalOt20Pay = 0;     
+
+            const defBreak = parseFloat(document.getElementById('defBreak').value) || 0;
+            const wkBreak = parseFloat(document.getElementById('wkBreak').value) || 0;
+            
+            const year = document.getElementById('selectYear').value;
+            const month = document.getElementById('selectMonth').value;
+            const savedState = [];
+
+            // นับจำนวนวันทำการปกติทั้งหมดที่มีในเดือนนั้น
+            for (let day = 1; day <= totalDaysInMonth; day++) {
+                const isHoliday = document.getElementById(`row-${day}`).getAttribute('data-holiday') === 'true';
+                if (!isHoliday) {
+                    totalNormalDaysInMonth++;
+                }
+            }
+
+            // คำนวณหาค่าจ้างเฉลี่ยต่อวัน 
+            const fullBaseSalaryWon = TOTAL_MONTHLY_HOURS * WAGE_2026; // 2,152,700 วอน
+            const dailyRateWon = totalNormalDaysInMonth > 0 ? (fullBaseSalaryWon / totalNormalDaysInMonth) : 0;
+
+            // คำนวณรายได้จากการติ๊กเช็กชื่อรายวัน
+            for (let day = 1; day <= totalDaysInMonth; day++) {
+                const isHoliday = document.getElementById(`row-${day}`).getAttribute('data-holiday') === 'true';
+                const isChecked = document.getElementById(`chk-${day}`).checked;
+                const startTime = document.getElementById(`start-${day}`).value;
+                const endTime = document.getElementById(`end-${day}`).value;
+                let dayOtHours = 0;
+
+                if (isChecked && startTime && endTime) {
+                    totalCheckedDays++; 
+
+                    const start = new Date(`1970-01-01T${startTime}:00`);
+                    let end = new Date(`1970-01-01T${endTime}:00`);
+                    if (end < start) end.setDate(end.getDate() + 1); 
+                    
+                    const totalHours = ((end - start) / (1000 * 60 * 60)) - (isHoliday ? wkBreak : defBreak);
+
+                    if (totalHours > 0) {
+                        if (!isHoliday) {
+                            // วันปกติ: นับวันเข้าฐานเงินเดือน
+                            totalWorkedNormalDays++;
+                            
+                            // เกิน 8 ชม. ในวันปกติ เป็น OT 1.5
+                            if (totalHours > 8) {
+                                dayOtHours = totalHours - 8;
+                                totalOt15Hours += dayOtHours; 
+                                totalOt15Pay += dayOtHours * WAGE_2026 * 1.5;
+                            }
+                        } else {
+                            // วันหยุด: ไม่เข้าฐานเงินเดือน เป็น OT หมด
+                            dayOtHours = totalHours;
+                            if (totalHours <= 8) {
+                                totalOt15Hours += totalHours; 
+                                totalOt15Pay += totalHours * WAGE_2026 * 1.5;
+                            } else {
+                                totalOt15Hours += 8; 
+                                totalOt15Pay += 8 * WAGE_2026 * 1.5;
+                                let overHours = totalHours - 8;
+                                totalOt20Hours += overHours; 
+                                totalOt20Pay += overHours * WAGE_2026 * 2.0;
+                            }
+                        }
+                    }
+                }
+                document.getElementById(`ot-text-${day}`).innerText = dayOtHours > 0 ? `+${dayOtHours.toFixed(1)}` : '0.0';
+                savedState.push({ day, isChecked, startTime, endTime });
+            }
+
+            // ฐานเงินเดือน = ค่าจ้างเฉลี่ยต่อวัน x จำนวนวันปกติที่ติ๊กทำงานจริง
+            const basePayWon = totalWorkedNormalDays * dailyRateWon;
+            const grossPayWon = basePayWon + totalOt15Pay + totalOt20Pay;
+
+            let incomeTaxWon = 0, localTaxWon = 0, healthInsWon = 0, jobInsWon = 0;
+            let roomPayWon = parseFloat(document.getElementById('deductRoom').value) || 0;
+            let otherDeductWon = parseFloat(document.getElementById('deductOther').value) || 0;
+
+            if (totalCheckedDays === 0) {
+                roomPayWon = 0;
+                otherDeductWon = 0;
+            }
+
+            if (!isUserEditingDeductions) {
+                if (totalCheckedDays > 0) {
+                    healthInsWon = Math.round(grossPayWon * 0.0354);
+                    jobInsWon = Math.round(grossPayWon * 0.009);
+                    incomeTaxWon = grossPayWon > 3500000 ? 52000 : grossPayWon > 3000000 ? 39000 : grossPayWon > 2500000 ? 28000 : 20000;
+                    localTaxWon = Math.round(incomeTaxWon * 0.1);
+                }
+                document.getElementById('deductIncomeTax').value = incomeTaxWon;
+                document.getElementById('deductLocalTax').value = localTaxWon;
+                document.getElementById('deductHealthIns').value = healthInsWon;
+                document.getElementById('deductJobIns').value = jobInsWon;
+            } else {
+                incomeTaxWon = totalCheckedDays > 0 ? (parseFloat(document.getElementById('deductIncomeTax').value) || 0) : 0;
+                localTaxWon = totalCheckedDays > 0 ? (parseFloat(document.getElementById('deductLocalTax').value) || 0) : 0;
+                healthInsWon = totalCheckedDays > 0 ? (parseFloat(document.getElementById('deductHealthIns').value) || 0) : 0;
+                jobInsWon = totalCheckedDays > 0 ? (parseFloat(document.getElementById('deductJobIns').value) || 0) : 0;
+            }
+
+            const totalDeductionWon = incomeTaxWon + localTaxWon + healthInsWon + jobInsWon + roomPayWon + otherDeductWon;
+            const netWon = grossPayWon > 0 ? (grossPayWon - totalDeductionWon) : 0;
+            
+            const inputRate = parseFloat(document.getElementById('exchangeRateInput').value) || 1;
+            let finalMultiplier = 0.021;
+
+            if (currentRateMode === "HANA") {
+                finalMultiplier = inputRate > 0 ? (1 / inputRate) : 0;
+            } else {
+                finalMultiplier = inputRate;
+            }
+
+            const netThb = netWon * finalMultiplier;
+
+            document.getElementById('txtTotalNormalDays').innerText = `${totalNormalDaysInMonth} วัน`;
+            document.getElementById('txtDailyRate').innerText = `${Math.round(dailyRateWon).toLocaleString()} วอน/วัน`;
+            document.getElementById('txtTotalDeduction').innerText = `${totalDeductionWon.toLocaleString()} วอน`;
+            document.getElementById('txtDeductSummary').innerText = `-${totalDeductionWon.toLocaleString()} วอน`;
+            document.getElementById('txtActualNormalDays').innerText = `${totalWorkedNormalDays} วัน`;
+            document.getElementById('txtBasePay').innerText = `${Math.round(basePayWon).toLocaleString()} วอน`;
+            
+            document.getElementById('sumOt15Hours').innerText = `${totalOt15Hours.toFixed(1)} ชม.`;
+            document.getElementById('sumOt20Hours').innerText = `${totalOt20Hours.toFixed(1)} ชม.`;
+            document.getElementById('txtOt15Pay').innerText = `${Math.round(totalOt15Pay).toLocaleString()} วอน`;
+            document.getElementById('txtOt20Pay').innerText = `${Math.round(totalOt20Pay).toLocaleString()} วอน`;
+
+            document.getElementById('txtNetWon').innerText = `${Math.round(netWon).toLocaleString()} วอน`;
+            document.getElementById('txtNetThb').innerText = `≈ ${Math.round(netThb).toLocaleString()} บาท`;
+
+            localStorage.setItem(`e9_state_v9_${year}_${month}`, JSON.stringify({
+                days: savedState, isManual: isUserEditingDeductions, rateMode: currentRateMode, savedRateValue: inputRate,
+                deductions: { incomeTax: incomeTaxWon, localTax: localTaxWon, healthIns: healthInsWon, jobIns: jobInsWon, otherPay: otherDeductWon }
+            }));
+        }
+
+        function loadSavedData() {
+            const year = document.getElementById('selectYear').value;
+            const month = document.getElementById('selectMonth').value;
+            const savedData = JSON.parse(localStorage.getItem(`e9_state_v9_${year}_${month}`));
+            
+            loadStaticConfig();
+
+            if (!savedData) {
+                document.getElementById('deductOther').value = 0;
+                currentRateMode = "HANA";
+                document.getElementById('lblRateMode').innerText = "🏦 โหมด Hana Bank (1 บาท = กี่วอน)";
+                document.getElementById('exchangeRateInput').value = "47.85";
+                // เช็กกล่องเลือกทั้งหมดเป็นค่าเริ่มต้น
+                document.getElementById('selectAllCheckbox').checked = true;
+                calculateSalary(); return;
+            }
+
+            if(savedData.rateMode) {
+                currentRateMode = savedData.rateMode;
+                if(currentRateMode === "HANA") {
+                    document.getElementById('lblRateMode').innerText = "🏦 โหมด Hana Bank (1 บาท = กี่วอน)";
+                    document.getElementById('exchangeRateInput').step = "0.01";
+                } else {
+                    document.getElementById('lblRateMode').innerText = "💱 โหมดตัวคูณทั่วไป (1 วอน = กี่บาท)";
+                    document.getElementById('exchangeRateInput').step = "0.0001";
+                }
+                document.getElementById('exchangeRateInput').value = savedData.savedRateValue || "47.85";
+            }
+
+            if(savedData.deductions) {
+                isUserEditingDeductions = savedData.isManual || false;
+                document.getElementById('deductIncomeTax').value = savedData.deductions.incomeTax;
+                document.getElementById('deductLocalTax').value = savedData.deductions.localTax;
+                document.getElementById('deductHealthIns').value = savedData.deductions.healthIns;
+                document.getElementById('deductJobIns').value = savedData.deductions.jobIns;
+                document.getElementById('deductOther').value = savedData.deductions.otherPay || 0;
+            }
+
+            if(savedData.days) {
+                let allChecked = true;
+                savedData.days.forEach(item => {
+                    const day = item.day;
+                    if (day <= totalDaysInMonth && document.getElementById(`chk-${day}`)) {
+                        const cb = document.getElementById(`chk-${day}`);
+                        const row = document.getElementById(`row-${day}`);
+                        cb.checked = item.isChecked;
+                        if (!item.isChecked) allChecked = false; // ตรวจสอบว่าโดนเอาติ๊กถูกออกบ้างไหม
+                        if (item.isChecked) {
+                            row.classList.remove('disabled-row');
+                        } else {
+                            row.classList.add('disabled-row');
+                        }
+                        document.getElementById(`start-${day}`).value = item.startTime;
+                        document.getElementById(`end-${day}`).value = item.endTime;
+                    }
+                });
+                document.getElementById('selectAllCheckbox').checked = allChecked;
+            }
+            calculateSalary();
+        }
+
+        function resetToDatabase() {
+            const year = document.getElementById('selectYear').value;
+            const month = document.getElementById('selectMonth').value;
+            if (confirm('คุณต้องการรีเซ็ตข้อมูลเฉพาะตารางของเดือนนี้ใช่หรือไม่?')) {
+                localStorage.removeItem(`e9_state_v9_${year}_${month}`);
+                document.getElementById('selectAllCheckbox').checked = true; // รีเซ็ตแล้วติ๊กกลับทั้งหมดให้
+                isUserEditingDeductions = false;
+                document.getElementById('deductOther').value = 0;
+                currentRateMode = "HANA";
+                document.getElementById('lblRateMode').innerText = "🏦 โหมด Hana Bank (1 บาท = กี่วอน)";
+                document.getElementById('exchangeRateInput').value = "47.85";
+                
+                loadStaticConfig(); 
+                initCalendar(); 
+                calculateSalary();
+            }
+        }
+    </script>
+</body>
+</html>
