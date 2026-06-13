@@ -3,22 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบคำนวณและบันทึกเวลาทำงาน E-9 (V9.8-AutoCheck)</title>
+    <title>ระบบคำนวณและบันทึกเวลาทำงาน E-9 (V9.8-MobileOptimize)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body { font-family: 'Prompt', sans-serif; }
         .disabled-row { opacity: 0.4; }
         .disabled-row input[type="time"] { pointer-events: none; background-color: #f1f5f9; }
+        /* 📱 ป้องกันไม่ให้ไอคอนนาฬิกาบนมือถือบางระบบเบียดเนื้อที่ป้อนเวลา */
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            background: none;
+            display: none;
+            -webkit-appearance: none;
+        }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght=300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body class="bg-slate-100 min-h-screen pb-12">
 
     <div class="bg-indigo-700 text-white pt-6 pb-24 px-4 rounded-b-3xl shadow-md text-center">
         <h1 class="text-xl font-bold">ระบบบันทึกเวลาทำงาน E-9</h1>
-    <!-- <p class="text-xs text-indigo-200 mt-1">V9.8 - ฐานเงินเดือนคิดเฉพาะวันปกติที่มาจริง + ค่าเริ่มต้นติ๊กทุกวัน</ฝp> -->
+        <p class="text-xs text-indigo-200 mt-1">V9.8 - ฐานเงินเดือนคิดเฉพาะวันปกติที่มาจริง + ค่าเริ่มต้นติ๊กทุกวัน (เรท 10,320 วอน)</p>
         
         <div class="mt-4 flex justify-center items-center space-x-2 max-w-xs mx-auto">
             <select id="selectMonth" onchange="changeCalendar()" class="bg-indigo-800 text-white text-xs rounded-lg px-3 py-2 border border-indigo-500 focus:outline-none w-1/2">
@@ -32,9 +38,9 @@
         </div>
     </div>
 
-    <div class="max-w-md mx-auto px-4 -mt-16 space-y-6">
+    <div class="max-w-md mx-auto px-3 -mt-16 space-y-5">
 
-        <div class="bg-white rounded-2xl shadow-lg p-4 border border-slate-200/80 space-y-4">
+        <div class="bg-white rounded-2xl shadow-lg p-3.5 border border-slate-200/80 space-y-4">
             <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                 <h2 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center">
                     <span class="mr-1.5">⚙️</span> ตั้งค่าเวลาตั้งต้น (จำค่าถาวร)
@@ -44,42 +50,42 @@
             
             <div class="space-y-1.5 border-b border-slate-100 pb-3">
                 <span class="text-xs font-bold text-indigo-600 flex items-center">🔹 วันธรรมดา (จันทร์ - ศุกร์)</span>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-3 gap-1.5">
                     <div>
-                        <label class="block text-[10px] text-slate-500">เข้างาน</label>
-                        <input type="time" id="defStart" value="08:00" onchange="saveStaticConfig(); applyDefaultTimeToAll();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium">
+                        <label class="block text-[10px] text-slate-500 mb-0.5">เข้างาน</label>
+                        <input type="time" id="defStart" value="08:00" onchange="saveStaticConfig(); applyDefaultTimeToAll();" class="w-full text-center px-1.5 py-1 border border-slate-300 rounded-lg text-xs font-medium focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-[10px] text-slate-500">เลิกงานปกติ</label>
-                        <input type="time" id="defEnd" value="17:00" onchange="saveStaticConfig(); applyDefaultTimeToAll();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium">
+                        <label class="block text-[10px] text-slate-500 mb-0.5">เลิกงานปกติ</label>
+                        <input type="time" id="defEnd" value="17:00" onchange="saveStaticConfig(); applyDefaultTimeToAll();" class="w-full text-center px-1.5 py-1 border border-slate-300 rounded-lg text-xs font-medium focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-[10px] text-slate-500">เวลาพัก (ชม.)</label>
-                        <input type="number" id="defBreak" value="1" step="0.5" onchange="saveStaticConfig(); calculateSalary();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium">
+                        <label class="block text-[10px] text-slate-500 mb-0.5">เวลาพัก (ชม.)</label>
+                        <input type="number" id="defBreak" value="1" step="0.5" onchange="saveStaticConfig(); calculateSalary();" class="w-full text-center px-1.5 py-1 border border-slate-300 rounded-lg text-xs font-medium focus:outline-none">
                     </div>
                 </div>
             </div>
 
             <div class="space-y-1.5">
                 <span class="text-xs font-bold text-rose-500 flex items-center">🟥 วันหยุดสัปดาห์ / วันหยุดเกาหลี</span>
-                <div class="grid grid-cols-3 gap-2">
+                <div class="grid grid-cols-3 gap-1.5">
                     <div>
-                        <label class="block text-[10px] text-slate-500">เข้างาน</label>
-                        <input type="time" id="wkStart" value="08:00" onchange="saveStaticConfig(); applyDefaultTimeToAll();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium">
+                        <label class="block text-[10px] text-slate-500 mb-0.5">เข้างาน</label>
+                        <input type="time" id="wkStart" value="08:00" onchange="saveStaticConfig(); applyDefaultTimeToAll();" class="w-full text-center px-1.5 py-1 border border-slate-300 rounded-lg text-xs font-medium focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-[10px] text-slate-500">เลิกงาน</label>
-                        <input type="time" id="wkEnd" value="17:00" onchange="saveStaticConfig(); applyDefaultTimeToAll();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium">
+                        <label class="block text-[10px] text-slate-500 mb-0.5">เลิกงาน</label>
+                        <input type="time" id="wkEnd" value="17:00" onchange="saveStaticConfig(); applyDefaultTimeToAll();" class="w-full text-center px-1.5 py-1 border border-slate-300 rounded-lg text-xs font-medium focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-[10px] text-slate-500">เวลาพัก (ชม.)</label>
-                        <input type="number" id="wkBreak" value="1" step="0.5" onchange="saveStaticConfig(); calculateSalary();" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg text-xs font-medium">
+                        <label class="block text-[10px] text-slate-500 mb-0.5">เวลาพัก (ชม.)</label>
+                        <input type="number" id="wkBreak" value="1" step="0.5" onchange="saveStaticConfig(); calculateSalary();" class="w-full text-center px-1.5 py-1 border border-slate-300 rounded-lg text-xs font-medium focus:outline-none">
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-lg p-4 border border-slate-200/80 space-y-4">
+        <div class="bg-white rounded-2xl shadow-lg p-3.5 border border-slate-200/80 space-y-4">
             <div class="border-b border-slate-100 pb-2 flex justify-between items-center">
                 <h2 class="text-xs font-bold text-rose-600 uppercase tracking-wider flex items-center">
                     <span class="mr-1.5">💸</span> รายการหักเงินจากสลิป (วอน)
@@ -89,30 +95,30 @@
                 </button>
             </div>
             
-            <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="grid grid-cols-2 gap-2.5 text-xs">
                 <div>
                     <label class="block text-[10px] text-slate-500 mb-0.5 font-medium">소득세 (ภาษีเงินได้)</label>
-                    <input type="number" id="deductIncomeTax" value="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg font-mono font-bold text-slate-700 text-right">
+                    <input type="number" id="deductIncomeTax" value="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1 border border-slate-300 rounded-lg font-mono font-bold text-slate-700 text-right">
                 </div>
                 <div>
                     <label class="block text-[10px] text-slate-500 mb-0.5 font-medium">지방소득세 (ภาษีท้องถิ่น)</label>
-                    <input type="number" id="deductLocalTax" value="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg font-mono font-bold text-slate-700 text-right">
+                    <input type="number" id="deductLocalTax" value="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1 border border-slate-300 rounded-lg font-mono font-bold text-slate-700 text-right">
                 </div>
                 <div>
                     <label class="block text-[10px] text-slate-500 mb-0.5 font-medium">건강보험 (ประกันสุขภาพ)</label>
-                    <input type="number" id="deductHealthIns" value="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg font-mono font-bold text-slate-700 text-right">
+                    <input type="number" id="deductHealthIns" value="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1 border border-slate-300 rounded-lg font-mono font-bold text-slate-700 text-right">
                 </div>
                 <div>
                     <label class="block text-[10px] text-slate-500 mb-0.5 font-medium">고용보험 (ประกันการจ้างงาน)</label>
-                    <input type="number" id="deductJobIns" value="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1.5 border border-slate-300 rounded-lg font-mono font-bold text-slate-700 text-right">
+                    <input type="number" id="deductJobIns" value="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1 border border-slate-300 rounded-lg font-mono font-bold text-slate-700 text-right">
                 </div>
                 <div>
                     <label class="block text-[10px] text-slate-600 mb-0.5 font-semibold text-indigo-600">숙소/관리비 (ค่าที่พักถาวร)</label>
-                    <input type="number" id="deductRoom" value="180000" oninput="saveStaticConfig(); updateDeductionTotals();" class="w-full px-2 py-1.5 border border-indigo-300 bg-indigo-50/30 rounded-lg font-mono font-bold text-indigo-900 text-right">
+                    <input type="number" id="deductRoom" value="180000" oninput="saveStaticConfig(); updateDeductionTotals();" class="w-full px-2 py-1 border border-indigo-300 bg-indigo-50/30 rounded-lg font-mono font-bold text-indigo-900 text-right">
                 </div>
                 <div>
                     <label class="block text-[10px] text-slate-600 mb-0.5 font-semibold text-amber-600">기타공제 (รายการหักอื่นๆ)</label>
-                    <input type="number" id="deductOther" value="0" placeholder="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1.5 border border-amber-300 bg-amber-50/30 rounded-lg font-mono font-bold text-amber-900 text-right">
+                    <input type="number" id="deductOther" value="0" placeholder="0" oninput="updateDeductionTotals()" class="w-full px-2 py-1 border border-amber-300 bg-amber-50/30 rounded-lg font-mono font-bold text-amber-900 text-right">
                 </div>
             </div>
 
@@ -122,9 +128,9 @@
             </div>
         </div>
 
-        <div class="bg-slate-900 text-white rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="bg-slate-900 text-white rounded-2xl p-4 shadow-xl space-y-4">
             <div class="flex justify-between items-center">
-                <h3 class="text-xs font-bold text-green-400 tracking-wide uppercase">💰 สรุปรายได้เดือนนี้ (10,300 วอน/ชม.)</h3>
+                <h3 class="text-xs font-bold text-green-400 tracking-wide uppercase">💰 สรุปรายได้เดือนนี้ (10,320 วอน/ชม.)</h3>
                 <button onclick="resetToDatabase()" class="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded hover:bg-slate-700 transition">รีเซ็ตตารางเดือนนี้</button>
             </div>
             
@@ -138,7 +144,7 @@
                     <span id="txtDailyRate" class="font-mono font-bold text-yellow-400">0 วอน/วัน</span>
                 </div>
                 <div class="flex justify-between border-t border-slate-800 pt-1 mt-1">
-                    <span class="text-emerald-400">✅ พี่ติ๊กทำงานในวันปกติจริง:</span>
+                    <span class="text-emerald-400">✅ ทำงานในวันปกติจริง:</span>
                     <span id="txtActualNormalDays" class="font-mono font-bold text-emerald-400">0 วัน</span>
                 </div>
             </div>
@@ -205,30 +211,30 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-md p-4 border border-slate-200">
-            <div class="flex justify-between items-center mb-3">
+        <div class="bg-white rounded-2xl shadow-md p-3 border border-slate-200">
+            <div class="flex justify-between items-center mb-2.5">
                 <h3 class="text-xs font-bold text-slate-800 uppercase">📅 รายการปฏิทินประจำเดือน</h3>
                 <div class="flex items-center space-x-1">
-                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" class="w-4 h-4 text-indigo-600 border-slate-300 rounded cursor-pointer" checked>
+                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" class="w-3.5 h-3.5 text-indigo-600 border-slate-300 rounded cursor-pointer" checked>
                     <label for="selectAllCheckbox" class="text-xs font-semibold text-slate-600 cursor-pointer select-none">เลือกทั้งหมด</label>
                 </div>
             </div>
 
-            <div class="grid grid-cols-12 gap-1 bg-slate-100 text-[11px] font-bold text-slate-600 p-2 rounded-lg text-center mb-2">
-                <div class="col-span-4 text-left pl-1">วันที่</div>
+            <div class="grid grid-cols-12 gap-1 bg-slate-100 text-[10px] font-bold text-slate-600 p-2 rounded-lg text-center mb-1.5">
+                <div class="col-span-4 text-left pl-0.5">วันที่</div>
                 <div class="col-span-3">เข้างาน</div>
                 <div class="col-span-3">เลิกงาน</div>
                 <div class="col-span-2 text-emerald-600">OT (ชม.)</div>
             </div>
 
-            <div id="daysContainer" class="space-y-1.5 max-h-[50vh] overflow-y-auto pr-1">
+            <div id="daysContainer" class="space-y-1 max-h-[50vh] overflow-y-auto pr-0.5">
                 </div>
         </div>
 
     </div>
 
     <script>
-        const WAGE_2026 = 10300; 
+        const WAGE_2026 = 10320; 
         const TOTAL_MONTHLY_HOURS = 209; 
         let totalDaysInMonth = 0;
         let isUserEditingDeductions = false;
@@ -297,7 +303,7 @@
         }
 
         function changeCalendar() {
-            document.getElementById('selectAllCheckbox').checked = true; // เมื่อเปลี่ยนเดือนให้เลือกทั้งหมด
+            document.getElementById('selectAllCheckbox').checked = true; 
             isUserEditingDeductions = false;
             initCalendar();
             loadSavedData();
@@ -337,21 +343,21 @@
 
                 if (holidayName) {
                     dayColor = "text-red-700 font-extrabold"; rowBg = "bg-red-100/70 border-red-300"; isHolidayMode = true; currentStart = wkStart; currentEnd = wkEnd;
-                    displayLabel = `${day} 🇰🇷 <span class="text-[9px] block font-normal text-red-600 leading-none truncate max-w-[80px]">${holidayName}</span>`;
+                    displayLabel = `${day} 🇰🇷 <span class="text-[8px] block font-normal text-red-600 leading-none truncate max-w-[65px]">${holidayName}</span>`;
                 } else {
                     displayLabel = `${day} (${dateObj.toLocaleDateString('th-TH', { weekday: 'short' })})`;
                 }
 
-                // สังเกตว่าเราเอาคลาส disabled-row ออก และใส่ checked ลงใน input เพื่อให้มันเริ่มที่ค่าติ๊กถูก
+                // 📱 ปรับแต่งชั้นแสดงผลให้กระชับด้วย text-[11px] และอินพุตเวลาที่บีบขอบด้วย px-1 py-0.5 ไม่ซ้อนทับกันแน่นอน
                 container.innerHTML += `
-                    <div id="row-${day}" class="grid grid-cols-12 gap-1 items-center ${rowBg} border p-1.5 rounded-xl transition" data-holiday="${isHolidayMode}">
-                        <div class="col-span-4 flex items-center space-x-1">
-                            <input type="checkbox" id="chk-${day}" onchange="toggleDayRow(${day})" class="day-checkbox w-4 h-4 text-indigo-600 rounded border-slate-300 cursor-pointer" checked>
-                            <span class="text-xs ${dayColor} select-none leading-tight">${displayLabel}</span>
+                    <div id="row-${day}" class="grid grid-cols-12 gap-1 items-center ${rowBg} border p-1 rounded-xl transition shadow-sm" data-holiday="${isHolidayMode}">
+                        <div class="col-span-4 flex items-center space-x-1 pl-0.5">
+                            <input type="checkbox" id="chk-${day}" onchange="toggleDayRow(${day})" class="day-checkbox w-3.5 h-3.5 text-indigo-600 rounded border-slate-300 cursor-pointer" checked>
+                            <span class="text-[11px] ${dayColor} select-none leading-tight">${displayLabel}</span>
                         </div>
-                        <div class="col-span-3"><input type="time" id="start-${day}" value="${currentStart}" onchange="calculateSalary()" class="w-full text-center px-1 py-1 bg-white border border-slate-300 rounded-lg text-xs"></div>
-                        <div class="col-span-3"><input type="time" id="end-${day}" value="${currentEnd}" onchange="calculateSalary()" class="w-full text-center px-1 py-1 bg-white border border-slate-300 rounded-lg text-xs"></div>
-                        <div class="col-span-2 text-center text-xs font-bold text-emerald-600 font-mono" id="ot-text-${day}">0.0</div>
+                        <div class="col-span-3"><input type="time" id="start-${day}" value="${currentStart}" onchange="calculateSalary()" class="w-full text-center px-1 py-0.5 bg-white border border-slate-300 rounded-md text-[11px] font-mono focus:outline-none focus:border-indigo-500"></div>
+                        <div class="col-span-3"><input type="time" id="end-${day}" value="${currentEnd}" onchange="calculateSalary()" class="w-full text-center px-1 py-0.5 bg-white border border-slate-300 rounded-md text-[11px] font-mono focus:outline-none focus:border-indigo-500"></div>
+                        <div class="col-span-2 text-center text-[11px] font-bold text-emerald-600 font-mono" id="ot-text-${day}">0.0</div>
                     </div>`;
             }
         }
@@ -424,7 +430,6 @@
             const month = document.getElementById('selectMonth').value;
             const savedState = [];
 
-            // นับจำนวนวันทำการปกติทั้งหมดที่มีในเดือนนั้น
             for (let day = 1; day <= totalDaysInMonth; day++) {
                 const isHoliday = document.getElementById(`row-${day}`).getAttribute('data-holiday') === 'true';
                 if (!isHoliday) {
@@ -432,11 +437,9 @@
                 }
             }
 
-            // คำนวณหาค่าจ้างเฉลี่ยต่อวัน 
-            const fullBaseSalaryWon = TOTAL_MONTHLY_HOURS * WAGE_2026; // 2,152,700 วอน
+            const fullBaseSalaryWon = TOTAL_MONTHLY_HOURS * WAGE_2026; 
             const dailyRateWon = totalNormalDaysInMonth > 0 ? (fullBaseSalaryWon / totalNormalDaysInMonth) : 0;
 
-            // คำนวณรายได้จากการติ๊กเช็กชื่อรายวัน
             for (let day = 1; day <= totalDaysInMonth; day++) {
                 const isHoliday = document.getElementById(`row-${day}`).getAttribute('data-holiday') === 'true';
                 const isChecked = document.getElementById(`chk-${day}`).checked;
@@ -455,17 +458,14 @@
 
                     if (totalHours > 0) {
                         if (!isHoliday) {
-                            // วันปกติ: นับวันเข้าฐานเงินเดือน
                             totalWorkedNormalDays++;
                             
-                            // เกิน 8 ชม. ในวันปกติ เป็น OT 1.5
                             if (totalHours > 8) {
                                 dayOtHours = totalHours - 8;
                                 totalOt15Hours += dayOtHours; 
                                 totalOt15Pay += dayOtHours * WAGE_2026 * 1.5;
                             }
                         } else {
-                            // วันหยุด: ไม่เข้าฐานเงินเดือน เป็น OT หมด
                             dayOtHours = totalHours;
                             if (totalHours <= 8) {
                                 totalOt15Hours += totalHours; 
@@ -484,7 +484,6 @@
                 savedState.push({ day, isChecked, startTime, endTime });
             }
 
-            // ฐานเงินเดือน = ค่าจ้างเฉลี่ยต่อวัน x จำนวนวันปกติที่ติ๊กทำงานจริง
             const basePayWon = totalWorkedNormalDays * dailyRateWon;
             const grossPayWon = basePayWon + totalOt15Pay + totalOt20Pay;
 
@@ -562,7 +561,6 @@
                 currentRateMode = "HANA";
                 document.getElementById('lblRateMode').innerText = "🏦 โหมด Hana Bank (1 บาท = กี่วอน)";
                 document.getElementById('exchangeRateInput').value = "47.85";
-                // เช็กกล่องเลือกทั้งหมดเป็นค่าเริ่มต้น
                 document.getElementById('selectAllCheckbox').checked = true;
                 calculateSalary(); return;
             }
@@ -596,7 +594,7 @@
                         const cb = document.getElementById(`chk-${day}`);
                         const row = document.getElementById(`row-${day}`);
                         cb.checked = item.isChecked;
-                        if (!item.isChecked) allChecked = false; // ตรวจสอบว่าโดนเอาติ๊กถูกออกบ้างไหม
+                        if (!item.isChecked) allChecked = false;
                         if (item.isChecked) {
                             row.classList.remove('disabled-row');
                         } else {
@@ -616,7 +614,7 @@
             const month = document.getElementById('selectMonth').value;
             if (confirm('คุณต้องการรีเซ็ตข้อมูลเฉพาะตารางของเดือนนี้ใช่หรือไม่?')) {
                 localStorage.removeItem(`e9_state_v9_${year}_${month}`);
-                document.getElementById('selectAllCheckbox').checked = true; // รีเซ็ตแล้วติ๊กกลับทั้งหมดให้
+                document.getElementById('selectAllCheckbox').checked = true; 
                 isUserEditingDeductions = false;
                 document.getElementById('deductOther').value = 0;
                 currentRateMode = "HANA";
