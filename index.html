@@ -3,18 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบคำนวณและบันทึกเวลาทำงาน E-9 (V9.8-MobileSizeFixed)</title>
+    <title>ระบบคำนวณและบันทึกเวลาทำงาน E-9 (V9.8-iOS-Fixed)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         body { font-family: 'Prompt', sans-serif; }
         .disabled-row { opacity: 0.4; }
         .disabled-row input[type="time"] { pointer-events: none; background-color: #f1f5f9; }
         
-        /* 📱 ป้องกันไม่ให้ไอคอนนาฬิกาของระบบมือถือเบียดเนื้อที่ป้อนเวลา จนตัวเลข AM/PM ซ้อนทับกัน */
+        /* 📱 ป้องกันไม่ให้ไอคอนนาฬิกาเบียดเนื้อที่ และบังคับสไตล์สำหรับ iPhone (iOS) ไม่ให้ตัวหนังสือทับกัน */
         input[type="time"]::-webkit-calendar-picker-indicator {
             background: none;
             display: none;
             -webkit-appearance: none;
+        }
+        
+        /* 🛠️ บังคับรีเซ็ต Padding และจัดการความกว้างภายในสำหรับ iOS */
+        input[type="time"] {
+            padding-left: 2px !important;
+            padding-right: 2px !important;
+            -webkit-padding-start: 2px !important;
+            -webkit-padding-end: 2px !important;
         }
     </style>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -225,12 +233,11 @@
                 </div>
             </div>
 
-            <!-- 📱 ปรับหัวตารางขยายส่วนคอลัมน์ของ เข้างาน/เลิกงาน เป็นกึ่งกลางรับหน้าจอโมบาย -->
             <div class="grid grid-cols-12 gap-1 bg-slate-100 text-[10px] font-bold text-slate-600 p-2 rounded-lg text-center mb-2">
                 <div class="col-span-3 text-left pl-1">วันที่</div>
                 <div class="col-span-4">เข้างาน</div>
                 <div class="col-span-4">เลิกงาน</div>
-                <div class="col-span-1 text-emerald-600 text-right pr-1">OT</div>
+                <div class="col-span-1 text-emerald-600 text-right pr-0.5">OT</div>
             </div>
 
             <div id="daysContainer" class="space-y-1.5 max-h-[50vh] overflow-y-auto pr-1">
@@ -386,26 +393,25 @@
 
                 if (holidayName) {
                     dayColor = "text-red-700 font-extrabold"; rowBg = "bg-red-100/70 border-red-300"; isHolidayMode = true; currentStart = wkStart; currentEnd = wkEnd;
-                    displayLabel = `${day} 🇰🇷 <span class="text-[9px] block font-normal text-red-600 leading-none truncate max-w-[70px]">${holidayName}</span>`;
+                    displayLabel = `${day} 🇰🇷 <span class="text-[9px] block font-normal text-red-600 leading-none truncate max-w-[65px]">${holidayName}</span>`;
                 } else {
                     displayLabel = `${day} (${dateObj.toLocaleDateString('th-TH', { weekday: 'short' })})`;
                 }
 
-                // 📱 แก้ไขขยาย col-span-3 เป็น col-span-4 และลดพื้นที่ฝั่งตัวเลือกวันเหลือ col-span-3 เพื่อรองรับฟอนต์ iOS AM/PM
+                // 📱 บีบสไตล์กล่องอินพุตเป็นพิเศษ ลดฟอนต์เหลือ text-[11px] เพื่อให้ข้อความ AM/PM ขยายได้เต็มแถว ไม่แตกแถวทับกันบน iPhone
                 container.innerHTML += `
                     <div id="row-${day}" class="grid grid-cols-12 gap-1 items-center ${rowBg} border p-1 rounded-xl transition" data-holiday="${isHolidayMode}">
-                        <div class="col-span-3 flex items-center space-x-1">
+                        <div class="col-span-3 flex items-center space-x-0.5">
                             <input type="checkbox" id="chk-${day}" onchange="toggleDayRow(${day})" class="day-checkbox w-4 h-4 text-indigo-600 rounded border-slate-300 cursor-pointer" checked>
-                            <span class="text-xs ${dayColor} select-none leading-tight">${displayLabel}</span>
+                            <span class="text-xs ${dayColor} select-none leading-tight tracking-tighter">${displayLabel}</span>
                         </div>
-                        <div class="col-span-4"><input type="time" id="start-${day}" value="${currentStart}" onchange="calculateSalary()" class="w-full text-center px-0.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:border-indigo-500"></div>
-                        <div class="col-span-4"><input type="time" id="end-${day}" value="${currentEnd}" onchange="calculateSalary()" class="w-full text-center px-0.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:outline-none focus:border-indigo-500"></div>
-                        <div class="col-span-1 text-right text-[11px] font-bold text-emerald-600 font-mono pr-1" id="ot-text-${day}">0.0</div>
+                        <div class="col-span-4"><input type="time" id="start-${day}" value="${currentStart}" onchange="calculateSalary()" class="w-full text-center px-0 py-1 bg-white border border-slate-300 rounded-lg text-[11px] font-semibold text-slate-900 focus:outline-none focus:border-indigo-500"></div>
+                        <div class="col-span-4"><input type="time" id="end-${day}" value="${currentEnd}" onchange="calculateSalary()" class="w-full text-center px-0 py-1 bg-white border border-slate-300 rounded-lg text-[11px] font-semibold text-slate-900 focus:outline-none focus:border-indigo-500"></div>
+                        <div class="col-span-1 text-right text-[11px] font-bold text-emerald-600 font-mono pr-0.5" id="ot-text-${day}">0.0</div>
                     </div>`;
             }
         }
 
-        // โค้ด JavaScript ส่วนอื่นๆ ตั้งแต่บรรทัดนี้ไปจนจบยังคงทำงานได้ถูกต้องและคงเดิมเหมือนเวอร์ชันก่อนหน้าทุกประการครับ
         function toggleDayRow(day) {
             const checkbox = document.getElementById(`chk-${day}`);
             const row = document.getElementById(`row-${day}`);
